@@ -44,16 +44,32 @@ public class lab1 {
     // --- HARD TASK ---
     // Шаблон класу для перевантаження TestModule
     public static class CustomClassReloader extends ClassLoader {
+        public Class<?> reloadClass(String className, String classPath) throws Exception {
+            java.io.File classFile = new java.io.File(classPath);
+            byte[] classData = java.nio.file.Files.readAllBytes(classFile.toPath());
+            return defineClass(className, classData, 0, classData.length);
+        }
         public void runDemo() throws Exception {
             String className = "TestModule";
-            String classPath = "./TestModule.class"; // Шлях до скомпільованого класу
+            String javaPath = "./TestModule.java";
+            String classPath = "./TestModule.class";
             long lastModified = 0;
             while (true) {
-                java.io.File file = new java.io.File(classPath);
-                if (file.exists() && file.lastModified() != lastModified) {
-                    lastModified = file.lastModified();
-                    byte[] classData = java.nio.file.Files.readAllBytes(file.toPath());
-                    Class<?> clazz = defineClass(className, classData, 0, classData.length);
+                java.io.File javaFile = new java.io.File(javaPath);
+                java.io.File classFile = new java.io.File(classPath);
+                if (javaFile.exists() && javaFile.lastModified() != lastModified) {
+                    lastModified = javaFile.lastModified();
+                    System.out.println("Компіляція TestModule.java...");
+                    Process compile = Runtime.getRuntime().exec("javac " + javaPath);
+                    compile.waitFor();
+                    if (!classFile.exists()) {
+                        System.out.println("Помилка компіляції TestModule.java");
+                        Thread.sleep(2000);
+                        continue;
+                    }
+                    // Створюємо новий ClassLoader для кожного завантаження
+                    CustomClassReloader loader = new CustomClassReloader();
+                    Class<?> clazz = loader.reloadClass(className, classPath);
                     Object instance = clazz.getDeclaredConstructor().newInstance();
                     System.out.println("Оновлений клас: " + instance);
                 }
