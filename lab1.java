@@ -1,4 +1,4 @@
-// completed by Maksym Lomakin
+// completed by Maksym Lomakin (assignment 2)
 public class lab1 {
     public static void main(String[] args) {
         java.util.Scanner scanner = new java.util.Scanner(System.in);
