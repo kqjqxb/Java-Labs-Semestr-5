@@ -1,3 +1,4 @@
+// completed by Maksym Lomakin
 public class lab1 {
     public static void main(String[] args) {
         java.util.Scanner scanner = new java.util.Scanner(System.in);
@@ -24,7 +25,6 @@ public class lab1 {
         scanner.close();
     }
 
-    // 2. Визначити слово, в якому кількість різних символів мінімальна
     public static String findWordWithMinUniqueChars(String input) {
         if (input == null || input.isEmpty()) return "";
         String[] words = input.trim().split("\\s+");
@@ -42,7 +42,6 @@ public class lab1 {
     }
 
     // --- HARD TASK ---
-    // Шаблон класу для перевантаження TestModule
     public static class CustomClassReloader extends ClassLoader {
         public Class<?> reloadClass(String className, String classPath) throws Exception {
             java.io.File classFile = new java.io.File(classPath);
@@ -67,13 +66,12 @@ public class lab1 {
                         Thread.sleep(2000);
                         continue;
                     }
-                    // Створюємо новий ClassLoader для кожного завантаження
                     CustomClassReloader loader = new CustomClassReloader();
                     Class<?> clazz = loader.reloadClass(className, classPath);
                     Object instance = clazz.getDeclaredConstructor().newInstance();
                     System.out.println("Оновлений клас: " + instance);
                 }
-                Thread.sleep(2000); // Перевіряти кожні 2 секунди
+                Thread.sleep(2000); // check 2 secs
             }
         }
     }
