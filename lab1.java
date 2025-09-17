@@ -1,0 +1,64 @@
+public class lab1 {
+    public static void main(String[] args) {
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        System.out.println("Виберіть режим: simple або hard");
+        String mode = scanner.nextLine().trim().toLowerCase();
+        if (mode.equals("simple")) {
+            System.out.println("Введіть рядок зі словами:");
+            String input = scanner.nextLine();
+            String result = findWordWithMinUniqueChars(input);
+            System.out.println("Слово з мінімальною кількістю різних символів: " + result);
+        } else if (mode.equals("hard")) {
+            System.out.println("--- DEMO: Custom Class Loader ---");
+            System.out.println("Внесіть зміни у TestModule.java та збережіть файл.");
+            System.out.println("Class loader буде перевантажувати клас при зміні файлу.");
+            try {
+                CustomClassReloader demo = new CustomClassReloader();
+                demo.runDemo();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Невідомий режим. Введіть simple або hard.");
+        }
+        scanner.close();
+    }
+
+    // 2. Визначити слово, в якому кількість різних символів мінімальна
+    public static String findWordWithMinUniqueChars(String input) {
+        if (input == null || input.isEmpty()) return "";
+        String[] words = input.trim().split("\\s+");
+        int min = Integer.MAX_VALUE;
+        String res = "";
+        for (String w : words) {
+            java.util.Set<Character> set = new java.util.HashSet<>();
+            for (char c : w.toCharArray()) set.add(c);
+            if (set.size() < min) {
+                min = set.size();
+                res = w;
+            }
+        }
+        return res;
+    }
+
+    // --- HARD TASK ---
+    // Шаблон класу для перевантаження TestModule
+    public static class CustomClassReloader extends ClassLoader {
+        public void runDemo() throws Exception {
+            String className = "TestModule";
+            String classPath = "./TestModule.class"; // Шлях до скомпільованого класу
+            long lastModified = 0;
+            while (true) {
+                java.io.File file = new java.io.File(classPath);
+                if (file.exists() && file.lastModified() != lastModified) {
+                    lastModified = file.lastModified();
+                    byte[] classData = java.nio.file.Files.readAllBytes(file.toPath());
+                    Class<?> clazz = defineClass(className, classData, 0, classData.length);
+                    Object instance = clazz.getDeclaredConstructor().newInstance();
+                    System.out.println("Оновлений клас: " + instance);
+                }
+                Thread.sleep(2000); // Перевіряти кожні 2 секунди
+            }
+        }
+    }
+}
