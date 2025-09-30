@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-// клас для представлення домашньої адреси
 class Address {
     private String street;
     private String house;
@@ -30,7 +29,7 @@ class Address {
     }
 }
 
-// клас для представлення запису в журналі куратора
+// журнал куратора
 class StudentRecord {
     private String lastName;
     private String firstName;
@@ -64,7 +63,7 @@ class StudentRecord {
     }
 }
 
-// мейн клас програми
+// мейн клас проги
 public class lab2 {
     private static List<StudentRecord> journal = new ArrayList<>();
     private static Scanner scanner = new Scanner(System.in);
@@ -152,7 +151,6 @@ public class lab2 {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
 
-            // Check format first
             String[] parts = input.split("\\.");
             if (parts.length != 3) {
                 System.out.println("Invalid date format! Use dd.MM.yyyy");
@@ -175,7 +173,7 @@ public class lab2 {
                 System.out.println("Birth date cannot be earlier than 01.01.1950.");
                 continue;
             }
-            // Check day validity for month/year
+
             boolean validDay = true;
             int[] daysInMonth = {31, (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
             if (day < 1 || day > daysInMonth[month - 1]) {
@@ -217,7 +215,7 @@ public class lab2 {
                 continue;
             }
             
-            // Normalize to +380XXXXXXXXX
+            // norm to +380XXXXXXXXX
             if (input.startsWith("0")) {
                 input = "+38" + input;
             } else if (input.startsWith("380")) {
