@@ -58,7 +58,7 @@ class StudentRecord {
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         return String.format(
-            "Прізвище: %s\nІм'я: %s\nДата народження: %s\nТелефон: %s\nАдреса: %s\n",
+            "Last name: %s\nFirst name: %s\nBirth date: %s\nPhone: %s\nAddress: %s\n",
             lastName, firstName, birthDate.format(formatter), phone, address
         );
     }
@@ -73,7 +73,7 @@ public class lab2 {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public static void main(String[] args) {
-        System.out.println("=== Журнал куратора ===\n");
+        System.out.println("=== Curator's Journal ===\n");
         
         while (true) {
             showMenu();
@@ -87,20 +87,20 @@ public class lab2 {
                     displayAllRecords();
                     break;
                 case 3:
-                    System.out.println("До побачення!");
+                    System.out.println("Goodbye!");
                     return;
                 default:
-                    System.out.println("Невірний вибір! Спробуйте ще раз.\n");
+                    System.out.println("Invalid choice! Please try again.\n");
             }
         }
     }
 
     private static void showMenu() {
-        System.out.println("Виберіть дію:");
-        System.out.println("1. Додати новий запис");
-        System.out.println("2. Показати всі записи");
-        System.out.println("3. Вийти");
-        System.out.print("Ваш вибір: ");
+        System.out.println("Select an action:");
+        System.out.println("1. Add new record");
+        System.out.println("2. Show all records");
+        System.out.println("3. Exit");
+        System.out.print("Your choice: ");
     }
 
     private static int getChoice() {
@@ -112,18 +112,18 @@ public class lab2 {
     }
 
     private static void addStudentRecord() {
-        System.out.println("\n=== Додавання нового запису ===");
+        System.out.println("\n=== Adding new record ===");
         
-        String lastName = getValidatedName("Введіть прізвище студента: ");
-        String firstName = getValidatedName("Введіть ім'я студента: ");
-        LocalDate birthDate = getValidatedDate("Введіть дату народження (dd.MM.yyyy): ");
-        String phone = getValidatedPhone("Введіть номер телефону: ");
+        String lastName = getValidatedName("Enter student's last name: ");
+        String firstName = getValidatedName("Enter student's first name: ");
+        LocalDate birthDate = getValidatedDate("Enter birth date (dd.MM.yyyy): ");
+        String phone = getValidatedPhone("Enter phone number: ");
         Address address = getValidatedAddress();
         
         StudentRecord record = new StudentRecord(lastName, firstName, birthDate, phone, address);
         journal.add(record);
         
-        System.out.println("Запис успішно додано!\n");
+        System.out.println("Record added successfully!\n");
     }
 
     private static String getValidatedName(String prompt) {
@@ -132,12 +132,12 @@ public class lab2 {
             String input = scanner.nextLine().trim();
             
             if (input.isEmpty()) {
-                System.out.println("Помилка: Поле не може бути порожнім!");
+                System.out.println("Error: Field cannot be empty!");
                 continue;
             }
             
             if (!NAME_PATTERN.matcher(input).matches()) {
-                System.out.println("Помилка: Ім'я може містити тільки літери!");
+                System.out.println("Error: Name can contain only letters!");
                 continue;
             }
             
@@ -146,26 +146,58 @@ public class lab2 {
     }
 
     private static LocalDate getValidatedDate(String prompt) {
+        LocalDate minDate = LocalDate.of(1950, 1, 1);
+        LocalDate maxDate = LocalDate.now().minusYears(14);
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
-            
+
+            // Check format first
+            String[] parts = input.split("\\.");
+            if (parts.length != 3) {
+                System.out.println("Invalid date format! Use dd.MM.yyyy");
+                continue;
+            }
+            int day, month, year;
+            try {
+                day = Integer.parseInt(parts[0]);
+                month = Integer.parseInt(parts[1]);
+                year = Integer.parseInt(parts[2]);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid date format! Use dd.MM.yyyy");
+                continue;
+            }
+            if (month < 1 || month > 12) {
+                System.out.println("Invalid month value! Month must be between 1 and 12.");
+                continue;
+            }
+            if (year < 1950) {
+                System.out.println("Birth date cannot be earlier than 01.01.1950.");
+                continue;
+            }
+            // Check day validity for month/year
+            boolean validDay = true;
+            int[] daysInMonth = {31, (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+            if (day < 1 || day > daysInMonth[month - 1]) {
+                validDay = false;
+            }
+            if (!validDay) {
+                System.out.printf("Invalid day value for the specified month! Month %d has only %d days.\n", month, daysInMonth[month - 1]);
+                continue;
+            }
             try {
                 LocalDate date = LocalDate.parse(input, DATE_FORMATTER);
-                
-                if (date.isAfter(LocalDate.now())) {
-                    System.out.println("Помилка: Дата народження не може бути в майбутньому!");
+                if (date.isAfter(maxDate)) {
+                    System.out.println("You must be at least 14 years old.");
                     continue;
                 }
-                
-                if (date.isBefore(LocalDate.now().minusYears(100))) {
-                    System.out.println("Помилка: Дата народження занадто давня!");
+                if (date.isBefore(minDate)) {
+                    System.out.println("Birth date cannot be earlier than 01.01.1950.");
                     continue;
                 }
-                
                 return date;
             } catch (DateTimeParseException e) {
-                System.out.println("Помилка: Невірний формат дати! Використовуйте dd.MM.yyyy");
+                System.out.println("Invalid date! Please check your input.");
             }
         }
     }
@@ -176,17 +208,16 @@ public class lab2 {
             String input = scanner.nextLine().trim().replaceAll("[\\s\\-\\(\\)]", "");
             
             if (input.isEmpty()) {
-                System.out.println("Помилка: Номер телефону не може бути порожнім!");
+                System.out.println("Error: Phone number cannot be empty!");
                 continue;
             }
             
             if (!PHONE_PATTERN.matcher(input).matches()) {
-                System.out.println("Помилка: Невірний формат номера телефону! " +
-                                 "Використовуйте формат: +380XXXXXXXXX або 0XXXXXXXXX");
+                System.out.println("Error: Invalid phone number format! Use: +380XXXXXXXXX or 0XXXXXXXXX");
                 continue;
             }
             
-            // нормалізація номера до формату +380XXXXXXXXX
+            // Normalize to +380XXXXXXXXX
             if (input.startsWith("0")) {
                 input = "+38" + input;
             } else if (input.startsWith("380")) {
@@ -202,11 +233,11 @@ public class lab2 {
     }
 
     private static Address getValidatedAddress() {
-        System.out.println("Введіть адресу:");
+        System.out.println("Enter address:");
         
-        String street = getValidatedString("Вулиця: ");
-        String house = getValidatedString("Будинок: ");
-        String apartment = getValidatedString("Квартира: ");
+        String street = getValidatedString("Street: ");
+        String house = getValidatedString("House: ");
+        String apartment = getValidatedString("Apartment: ");
         
         return new Address(street, house, apartment);
     }
@@ -217,7 +248,7 @@ public class lab2 {
             String input = scanner.nextLine().trim();
             
             if (input.isEmpty()) {
-                System.out.println("Помилка: Поле не може бути порожнім!");
+                System.out.println("Error: Field cannot be empty!");
                 continue;
             }
             
@@ -226,15 +257,15 @@ public class lab2 {
     }
 
     private static void displayAllRecords() {
-        System.out.println("\n=== Всі записи в журналі ===");
+        System.out.println("\n=== All records in the journal ===");
         
         if (journal.isEmpty()) {
-            System.out.println("Журнал порожній.\n");
+            System.out.println("Journal is empty.\n");
             return;
         }
         
         for (int i = 0; i < journal.size(); i++) {
-            System.out.printf("--- Запис #%d ---\n", i + 1);
+            System.out.printf("--- Record #%d ---\n", i + 1);
             System.out.println(journal.get(i));
         }
     }
