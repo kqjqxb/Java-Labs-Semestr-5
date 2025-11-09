@@ -1,34 +1,93 @@
-// lab6 by Maksym Lomakin
 import java.util.*;
 
 public class lab6 {
-	// implementation of a red-black tree for int keys with insertion, deletion, and output.
-	static class RBTree {
-		private static final boolean RED = true;
-		private static final boolean BLACK = false;
+	enum Color { RED, BLACK }
 
-		class Node {
-			int key;
-			boolean color;
-			Node left, right, parent;
-			Node(int key, boolean color, Node nil) {
-				this.key = key;
-				this.color = color;
-				this.left = nil;
-				this.right = nil;
-				this.parent = nil;
-			}
+	static class Node {
+		int key;
+		Color color;
+		Node left, right, parent;
+		Node(int key, Color color, Node nil) {
+			this.key = key;
+			this.color = color;
+			this.left = nil;
+			this.right = nil;
+			this.parent = nil;
 		}
+		@Override
+		public String toString() {
+			return key + "(" + (color == Color.RED ? "R" : "B") + ")";
+		}
+	}
 
-		private final Node NIL = new Node(0, BLACK, null);
-		private Node root = NIL;
+	static class RBTree {
+		private final Node NIL;
+		private Node root;
 
-		public RBTree() {
+		RBTree() {
+			NIL = new Node(0, Color.BLACK, null);
 			NIL.left = NIL.right = NIL.parent = NIL;
 			root = NIL;
 		}
 
-		// left rotate x
+		public void insert(int key) {
+			Node z = new Node(key, Color.RED, NIL);
+			Node y = NIL;
+			Node x = root;
+			while (x != NIL) {
+				y = x;
+				if (z.key < x.key) x = x.left;
+				else x = x.right;
+			}
+			z.parent = y;
+			if (y == NIL) root = z;
+			else if (z.key < y.key) y.left = z;
+			else y.right = z;
+			z.left = NIL;
+			z.right = NIL;
+			z.color = Color.RED;
+			insertFixup(z);
+		}
+
+		private void insertFixup(Node z) {
+			while (z.parent.color == Color.RED) {
+				if (z.parent == z.parent.parent.left) {
+					Node y = z.parent.parent.right;
+					if (y.color == Color.RED) {
+						z.parent.color = Color.BLACK;
+						y.color = Color.BLACK;
+						z.parent.parent.color = Color.RED;
+						z = z.parent.parent;
+					} else {
+						if (z == z.parent.right) {
+							z = z.parent;
+							leftRotate(z);
+						}
+						z.parent.color = Color.BLACK;
+						z.parent.parent.color = Color.RED;
+						rightRotate(z.parent.parent);
+					}
+				} else {
+					Node y = z.parent.parent.left;
+					if (y.color == Color.RED) {
+						z.parent.color = Color.BLACK;
+						y.color = Color.BLACK;
+						z.parent.parent.color = Color.RED;
+						z = z.parent.parent;
+					} else {
+						if (z == z.parent.left) {
+							z = z.parent;
+							rightRotate(z);
+						}
+						z.parent.color = Color.BLACK;
+						z.parent.parent.color = Color.RED;
+						leftRotate(z.parent.parent);
+					}
+				}
+			}
+			root.color = Color.BLACK;
+		}
+
 		private void leftRotate(Node x) {
 			Node y = x.right;
 			x.right = y.left;
@@ -41,7 +100,6 @@ public class lab6 {
 			x.parent = y;
 		}
 
-		// right rotate x
 		private void rightRotate(Node x) {
 			Node y = x.left;
 			x.left = y.right;
@@ -54,315 +112,137 @@ public class lab6 {
 			x.parent = y;
 		}
 
-		public void insert(int key) {
-			Node z = new Node(key, RED, NIL);
-			Node y = NIL;
-			Node x = root;
-			while (x != NIL) {
-				y = x;
-				if (z.key < x.key) x = x.left;
-				else x = x.right;
+		public void inorder() {
+			inorder(root);
+			System.out.println();
+		}
+		private void inorder(Node x) {
+			if (x == NIL) return;
+			inorder(x.left);
+			System.out.print(x.key + " ");
+			inorder(x.right);
+		}
+
+		public void preorder() {
+			preorder(root);
+			System.out.println();
+		}
+		private void preorder(Node x) {
+			if (x == NIL) return;
+			System.out.print(x.key + " ");
+			preorder(x.left);
+			preorder(x.right);
+		}
+
+		public void display() {
+			if (root == NIL) {
+				System.out.println("(empty tree)");
+				return;
 			}
-			z.parent = y;
-			if (y == NIL) root = z;
-			else if (z.key < y.key) y.left = z;
-			else y.right = z;
-			z.left = NIL; z.right = NIL; z.color = RED;
-			insertFixup(z);
+			printSubtree(root, "", true);
 		}
 
-		private void insertFixup(Node z) {
-			while (z.parent.color == RED) {
-				if (z.parent == z.parent.parent.left) {
-					Node y = z.parent.parent.right;
-					if (y.color == RED) {
-						z.parent.color = BLACK;
-						y.color = BLACK;
-						z.parent.parent.color = RED;
-						z = z.parent.parent;
-					} else {
-						if (z == z.parent.right) {
-							z = z.parent;
-							leftRotate(z);
-						}
-						z.parent.color = BLACK;
-						z.parent.parent.color = RED;
-						rightRotate(z.parent.parent);
-					}
-				} else {
-					Node y = z.parent.parent.left;
-					if (y.color == RED) {
-						z.parent.color = BLACK;
-						y.color = BLACK;
-						z.parent.parent.color = RED;
-						z = z.parent.parent;
-					} else {
-						if (z == z.parent.left) {
-							z = z.parent;
-							rightRotate(z);
-						}
-						z.parent.color = BLACK;
-						z.parent.parent.color = RED;
-						leftRotate(z.parent.parent);
-					}
-				}
-			}
-			root.color = BLACK;
-		}
-
-		// transplant u with v
-		private void transplant(Node u, Node v) {
-			if (u.parent == NIL) root = v;
-			else if (u == u.parent.left) u.parent.left = v;
-			else u.parent.right = v;
-			v.parent = u.parent;
-		}
-
-		private Node minimum(Node x) {
-			while (x.left != NIL) x = x.left;
-			return x;
-		}
-
-		public boolean delete(int key) {
-			Node z = root;
-			while (z != NIL && z.key != key) {
-				if (key < z.key) z = z.left;
-				else z = z.right;
-			}
-			if (z == NIL) return false;
-			Node y = z;
-			boolean yOriginalColor = y.color;
-			Node x;
-			if (z.left == NIL) {
-				x = z.right;
-				transplant(z, z.right);
-			} else if (z.right == NIL) {
-				x = z.left;
-				transplant(z, z.left);
-			} else {
-				y = minimum(z.right);
-				yOriginalColor = y.color;
-				x = y.right;
-				if (y.parent == z) x.parent = y;
-				else {
-					transplant(y, y.right);
-					y.right = z.right;
-					y.right.parent = y;
-				}
-				transplant(z, y);
-				y.left = z.left;
-				y.left.parent = y;
-				y.color = z.color;
-			}
-			if (yOriginalColor == BLACK) deleteFixup(x);
-			return true;
-		}
-
-		private void deleteFixup(Node x) {
-			while (x != root && x.color == BLACK) {
-				if (x == x.parent.left) {
-					Node w = x.parent.right;
-					if (w.color == RED) {
-						w.color = BLACK;
-						x.parent.color = RED;
-						leftRotate(x.parent);
-						w = x.parent.right;
-					}
-					if (w.left.color == BLACK && w.right.color == BLACK) {
-						w.color = RED;
-						x = x.parent;
-					} else {
-						if (w.right.color == BLACK) {
-							w.left.color = BLACK;
-							w.color = RED;
-							rightRotate(w);
-							w = x.parent.right;
-						}
-						w.color = x.parent.color;
-						x.parent.color = BLACK;
-						w.right.color = BLACK;
-						leftRotate(x.parent);
-						x = root;
-					}
-				} else {
-					Node w = x.parent.left;
-					if (w.color == RED) {
-						w.color = BLACK;
-						x.parent.color = RED;
-						rightRotate(x.parent);
-						w = x.parent.left;
-					}
-					if (w.right.color == BLACK && w.left.color == BLACK) {
-						w.color = RED;
-						x = x.parent;
-					} else {
-						if (w.left.color == BLACK) {
-							w.right.color = BLACK;
-							w.color = RED;
-							leftRotate(w);
-							w = x.parent.left;
-						}
-						w.color = x.parent.color;
-						x.parent.color = BLACK;
-						w.left.color = BLACK;
-						rightRotate(x.parent);
-						x = root;
-					}
-				}
-			}
-			x.color = BLACK;
-		}
-
-		// traversals
-		public List<Integer> inorder() {
-			List<Integer> res = new ArrayList<>();
-			inorderRec(root, res);
-			return res;
-		}
-		private void inorderRec(Node n, List<Integer> r) {
-			if (n == NIL) return;
-			inorderRec(n.left, r);
-			r.add(n.key);
-			inorderRec(n.right, r);
-		}
-
-		public List<Integer> preorder() {
-			List<Integer> res = new ArrayList<>();
-			preorderRec(root, res);
-			return res;
-		}
-		private void preorderRec(Node n, List<Integer> r) {
-			if (n == NIL) return;
-			r.add(n.key);
-			preorderRec(n.left, r);
-			preorderRec(n.right, r);
-		}
-
-		public List<Integer> levelOrder() {
-			List<Integer> res = new ArrayList<>();
-			if (root == NIL) return res;
-			Queue<Node> q = new LinkedList<>();
-			q.add(root);
-			while (!q.isEmpty()) {
-				Node cur = q.poll();
-				res.add(cur.key);
-				if (cur.left != NIL) q.add(cur.left);
-				if (cur.right != NIL) q.add(cur.right);
-			}
-			return res;
-		}
-
-		// pretty print (rotated: root at left, right subtree above)
-		public void printTree() {
-			printRec(root, "", true);
-		}
-		private void printRec(Node node, String indent, boolean last) {
+		private void printSubtree(Node node, String indent, boolean last) {
 			if (node == NIL) return;
 			System.out.print(indent);
 			if (last) {
-				System.out.print("R----");
-				indent += "     ";
+				System.out.print("└── ");
+				indent += "    ";
 			} else {
-				System.out.print("L----");
-				indent += "|    ";
+				System.out.print("├── ");
+				indent += "│   ";
 			}
-			System.out.println(node.key + "(" + (node.color==RED?"R":"B") + ")");
-			printRec(node.right, indent, false);
-			printRec(node.left, indent, true);
+			System.out.println(node.toString());
+			boolean hasLeft = node.left != NIL;
+			boolean hasRight = node.right != NIL;
+			if (hasLeft || hasRight) {
+				if (hasLeft) printSubtree(node.left, indent, false);
+				if (hasRight) printSubtree(node.right, indent, true);
+			}
 		}
 	}
 
-	// app console
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
+		System.out.println("Red-Black Tree demo");
+		System.out.println("Виберіть режим додавання елементів:");
+		System.out.println("1 - випадкові числа");
+		System.out.println("2 - впорядковано (зростання)");
+		System.out.println("3 - ручний ввід (введіть числа через пробіл)");
+
+		int choice = 0;
+		try {
+			choice = Integer.parseInt(sc.nextLine().trim());
+		} catch (Exception e) {
+			System.out.println("Невірний ввід, використано режим 1.");
+			choice = 1;
+		}
+
+		List<Integer> values = new ArrayList<>();
+		Random rnd = new Random();
+
+		if (choice == 1) {
+			System.out.print("Скільки випадкових чисел згенерувати? ");
+			int n = Integer.parseInt(sc.nextLine().trim());
+			for (int i = 0; i < n; i++) values.add(rnd.nextInt(100));
+			System.out.println("Порядок додавання: " + values);
+		} else if (choice == 2) {
+			System.out.print("Скільки чисел згенерувати і впорядкувати? ");
+			int n = Integer.parseInt(sc.nextLine().trim());
+			for (int i = 0; i < n; i++) values.add(rnd.nextInt(100));
+			Collections.sort(values);
+			System.out.println("Порядок (зростання): " + values);
+		} else {
+			System.out.println("Введіть числа через пробіл:");
+			String line = sc.nextLine().trim();
+			if (!line.isEmpty()) {
+				for (String s : line.split("\\s+")) {
+					try { values.add(Integer.parseInt(s)); } catch (Exception ignored) {}
+				}
+			}
+			System.out.println("Порядок додавання: " + values);
+		}
+
 		RBTree tree = new RBTree();
-		System.out.println("Red-Black Tree console app");
-		while (true) {
-			System.out.println("\nMenu:");
-			System.out.println("1) Fill with random numbers");
-			System.out.println("2) Fill with sorted numbers (ascending)");
-			System.out.println("3) Enter numbers manually");
-			System.out.println("4) Print traversals and tree");
-			System.out.println("5) Delete a key");
-			System.out.println("6) Clear tree");
-			System.out.println("0) Exit");
-			System.out.print("Choose option: ");
-			String opt = sc.nextLine().trim();
-			if (opt.equals("0")) break;
-			switch (opt) {
-				case "1": {
-					System.out.print("How many numbers? ");
-					int n = readInt(sc, 10);
-					System.out.print("Max value (exclusive)? ");
-					int max = readInt(sc, 100);
-					int[] arr = new int[n];
-					Random rnd = new Random();
-					for (int i=0;i<n;i++) arr[i] = rnd.nextInt(Math.max(1, max));
-					System.out.println("Insertion order: " + Arrays.toString(arr));
-					for (int v: arr) tree.insert(v);
-					System.out.println("Inserted " + n + " random numbers.");
-					break;
+		for (int v : values) tree.insert(v);
+
+		System.out.println("\nОбходи дерева:");
+		System.out.print("In-order: ");
+		tree.inorder();
+		System.out.print("Pre-order: ");
+		tree.preorder();
+
+		System.out.println("\nВізуалізація дерева:");
+		tree.display();
+
+		System.out.println("\nБажаєте видалити значення? (y/n)");
+		String ans = sc.nextLine().trim().toLowerCase();
+		if (ans.equals("y") || ans.equals("так") || ans.equals("t")) {
+			System.out.println("Введіть числа для видалення через пробіл (всі входження):");
+			String line = sc.nextLine().trim();
+			Set<Integer> toRemove = new HashSet<>();
+			if (!line.isEmpty()) {
+				for (String s : line.split("\\s+")) {
+					try { toRemove.add(Integer.parseInt(s)); } catch (Exception ignored) {}
 				}
-				case "2": {
-					System.out.print("How many numbers? ");
-					int n = readInt(sc, 10);
-					int start = 0;
-					int[] arr = new int[n];
-					for (int i=0;i<n;i++) arr[i] = start + i;
-					System.out.println("Insertion order (sorted): " + Arrays.toString(arr));
-					for (int v: arr) tree.insert(v);
-					System.out.println("Inserted sorted sequence.");
-					break;
-				}
-				case "3": {
-					System.out.println("Enter integers separated by spaces:");
-					String line = sc.nextLine();
-					String[] parts = line.trim().split("\\s+");
-					List<Integer> vals = new ArrayList<>();
-					for (String p: parts) {
-						if (p.isEmpty()) continue;
-						try { vals.add(Integer.parseInt(p)); } catch (NumberFormatException ex) {}
-					}
-					System.out.println("Insertion order: " + vals);
-					for (int v: vals) tree.insert(v);
-					break;
-				}
-				case "4": {
-					System.out.println("In-order: " + tree.inorder());
-					System.out.println("Pre-order: " + tree.preorder());
-					System.out.println("Level-order: " + tree.levelOrder());
-					System.out.println("Tree:");
-					tree.printTree();
-					break;
-				}
-				case "5": {
-					System.out.print("Enter key to delete: ");
-					String k = sc.nextLine().trim();
-					try {
-						int key = Integer.parseInt(k);
-						boolean ok = tree.delete(key);
-						System.out.println(ok ? "Deleted " + key : "Key not found: " + key);
-					} catch (NumberFormatException ex) {
-						System.out.println("Invalid integer.");
-					}
-					break;
-				}
-				case "6": {
-					tree = new RBTree();
-					System.out.println("Tree cleared.");
-					break;
-				}
-				default:
-					System.out.println("Unknown option.");
+			}
+			if (!toRemove.isEmpty()) {
+				// Варіативний підхід до видалення: перебудова дерева з елементів, що залишились
+				List<Integer> survivors = new ArrayList<>();
+				for (int v : values) if (!toRemove.contains(v)) survivors.add(v);
+				RBTree newTree = new RBTree();
+				for (int v : survivors) newTree.insert(v);
+				System.out.println("\nПісля видалення:");
+				System.out.print("In-order: ");
+				newTree.inorder();
+				System.out.println("\nВізуалізація дерева:");
+				newTree.display();
+			} else {
+				System.out.println("Немає дійсних значень для видалення.");
 			}
 		}
-		System.out.println("Bye.");
-		sc.close();
-	}
 
-	private static int readInt(Scanner sc, int def) {
-		String s = sc.nextLine().trim();
-		if (s.isEmpty()) return def;
-		try { return Integer.parseInt(s); } catch (NumberFormatException ex) { return def; }
+		System.out.println("\nГотово.");
+		sc.close();
 	}
 }
