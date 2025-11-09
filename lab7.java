@@ -1,248 +1,161 @@
 import java.util.*;
+import java.util.stream.*;
 
 public class lab7 {
-	enum Color { RED, BLACK }
 
-	static class Node {
-		int key;
-		Color color;
-		Node left, right, parent;
-		Node(int key, Color color, Node nil) {
-			this.key = key;
-			this.color = color;
-			this.left = nil;
-			this.right = nil;
-			this.parent = nil;
-		}
-		@Override
-		public String toString() {
-			return key + "(" + (color == Color.RED ? "R" : "B") + ")";
-		}
+	// таска 1.
+	public static String[] shorterThanAverage(String[] arr) {
+		double avg = Arrays.stream(arr).mapToInt(String::length).average().orElse(0);
+		return Arrays.stream(arr).filter(s -> s.length() < avg).toArray(String[]::new);
+	}
+	public static String[] longerThanAverage(String[] arr) {
+		double avg = Arrays.stream(arr).mapToInt(String::length).average().orElse(0);
+		return Arrays.stream(arr).filter(s -> s.length() > avg).toArray(String[]::new);
 	}
 
-	static class RBTree {
-		private final Node NIL;
-		private Node root;
-
-		RBTree() {
-			NIL = new Node(0, Color.BLACK, null);
-			NIL.left = NIL.right = NIL.parent = NIL;
-			root = NIL;
-		}
-
-		public void insert(int key) {
-			Node z = new Node(key, Color.RED, NIL);
-			Node y = NIL;
-			Node x = root;
-			while (x != NIL) {
-				y = x;
-				if (z.key < x.key) x = x.left;
-				else x = x.right;
-			}
-			z.parent = y;
-			if (y == NIL) root = z;
-			else if (z.key < y.key) y.left = z;
-			else y.right = z;
-			z.left = NIL;
-			z.right = NIL;
-			z.color = Color.RED;
-			insertFixup(z);
-		}
-
-		private void insertFixup(Node z) {
-			while (z.parent.color == Color.RED) {
-				if (z.parent == z.parent.parent.left) {
-					Node y = z.parent.parent.right;
-					if (y.color == Color.RED) {
-						z.parent.color = Color.BLACK;
-						y.color = Color.BLACK;
-						z.parent.parent.color = Color.RED;
-						z = z.parent.parent;
-					} else {
-						if (z == z.parent.right) {
-							z = z.parent;
-							leftRotate(z);
-						}
-						z.parent.color = Color.BLACK;
-						z.parent.parent.color = Color.RED;
-						rightRotate(z.parent.parent);
-					}
-				} else {
-					Node y = z.parent.parent.left;
-					if (y.color == Color.RED) {
-						z.parent.color = Color.BLACK;
-						y.color = Color.BLACK;
-						z.parent.parent.color = Color.RED;
-						z = z.parent.parent;
-					} else {
-						if (z == z.parent.left) {
-							z = z.parent;
-							rightRotate(z);
-						}
-						z.parent.color = Color.BLACK;
-						z.parent.parent.color = Color.RED;
-						leftRotate(z.parent.parent);
-					}
-				}
-			}
-			root.color = Color.BLACK;
-		}
-
-		private void leftRotate(Node x) {
-			Node y = x.right;
-			x.right = y.left;
-			if (y.left != NIL) y.left.parent = x;
-			y.parent = x.parent;
-			if (x.parent == NIL) root = y;
-			else if (x == x.parent.left) x.parent.left = y;
-			else x.parent.right = y;
-			y.left = x;
-			x.parent = y;
-		}
-
-		private void rightRotate(Node x) {
-			Node y = x.left;
-			x.left = y.right;
-			if (y.right != NIL) y.right.parent = x;
-			y.parent = x.parent;
-			if (x.parent == NIL) root = y;
-			else if (x == x.parent.right) x.parent.right = y;
-			else x.parent.left = y;
-			y.right = x;
-			x.parent = y;
-		}
-
-		public void inorder() {
-			inorder(root);
-			System.out.println();
-		}
-		private void inorder(Node x) {
-			if (x == NIL) return;
-			inorder(x.left);
-			System.out.print(x.key + " ");
-			inorder(x.right);
-		}
-
-		public void preorder() {
-			preorder(root);
-			System.out.println();
-		}
-		private void preorder(Node x) {
-			if (x == NIL) return;
-			System.out.print(x.key + " ");
-			preorder(x.left);
-			preorder(x.right);
-		}
-
-		public void display() {
-			if (root == NIL) {
-				System.out.println("(empty tree)");
-				return;
-			}
-			printSubtree(root, "", true);
-		}
-
-		private void printSubtree(Node node, String indent, boolean last) {
-			if (node == NIL) return;
-			System.out.print(indent);
-			if (last) {
-				System.out.print("└── ");
-				indent += "    ";
-			} else {
-				System.out.print("├── ");
-				indent += "│   ";
-			}
-			System.out.println(node.toString());
-			boolean hasLeft = node.left != NIL;
-			boolean hasRight = node.right != NIL;
-			if (hasLeft || hasRight) {
-				if (hasLeft) printSubtree(node.left, indent, false);
-				if (hasRight) printSubtree(node.right, indent, true);
-			}
-		}
+	// таска 2. ворд з мінімальною кількістю різних символів (перше якщо декілька)
+	public static String[] wordWithMinDistinctChars(String line) {
+		String[] words = splitWords(line);
+		Optional<String> opt = Arrays.stream(words)
+			.min(Comparator.comparingInt(s -> (int) s.chars().distinct().count()));
+		return opt.map(s -> new String[]{s}).orElse(new String[0]);
 	}
 
+	// таска 3. ворди тільки латинські, серед них ті з рівною кількістю голосних і приголосних
+	public static String[] latinWordsWithEqualVowelsAndConsonants(String line) {
+		String[] words = splitWords(line);
+		return Arrays.stream(words)
+			.filter(lab7::isLatinWord)
+			.filter(s -> {
+				long vowels = s.chars().mapToObj(c -> (char)c)
+					.filter(c -> "aeiouAEIOU".indexOf(c) >= 0).count();
+				long consonants = s.length() - vowels;
+				return vowels == consonants;
+			})
+			.toArray(String[]::new);
+	}
+
+	// таска 4. ворди, символи яких йдуть у порядку зростання кодів (строго)
+	public static String[] wordsWithIncreasingCharCodes(String line) {
+		String[] words = splitWords(line);
+		return Arrays.stream(words)
+			.filter(s -> {
+				return s.chars().boxed()
+					.collect(Collectors.toList())
+					.stream()
+					.reduce(new int[]{-1, 1}, (acc, c) -> {
+						// acc[0]=prev, acc[1]=valid(1/0)
+						if (acc[1] == 0) return new int[]{c, 0};
+						if (acc[0] == -1) return new int[]{c, 1};
+						return new int[]{c, (acc[0] < c) ? 1 : 0};
+					}, (a,b)->a)[1] == 1;
+			})
+			.toArray(String[]::new);
+	}
+
+	// таска 5. ворди, що складаються тільки з різних символів
+	public static String[] wordsWithAllUniqueChars(String line) {
+		String[] words = splitWords(line);
+		return Arrays.stream(words)
+			.filter(s -> s.chars().distinct().count() == s.length())
+			.toArray(String[]::new);
+	}
+
+	// таска 6. серед простих <= n знайти таке, в бінарі якого макс кількість одиниць
+	public static int primeWithMaxOnesInBinary(int n) {
+		return primesUpTo(n).stream()
+			.max(Comparator.comparingInt(p -> Integer.bitCount(p)))
+			.orElse(-1);
+	}
+
+	// таска 7. серед простих <= n знайти таке, в бінарі якого макс кількість нулів
+	public static int primeWithMaxZerosInBinary(int n) {
+		return primesUpTo(n).stream()
+			.max(Comparator.comparingInt(p -> {
+				int bits = Integer.toBinaryString(p).length();
+				return bits - Integer.bitCount(p);
+			}))
+			.orElse(-1);
+	}
+
+	// таска 8. емаунт надпростих чисел <= 1000 (реверс-парніми) або <= given (<=1000)
+	public static int countSuperPrimes(int n) {
+		int limit = Math.min(n, 1000);
+		return (int) IntStream.rangeClosed(2, limit)
+			.filter(p -> isPrime(p) && isPrime(reverseInt(p)))
+			.count();
+	}
+
+	// таска 9. знайти всі досконалі числа від 1 до n
+	public static int[] perfectNumbersUpTo(int n) {
+		return IntStream.rangeClosed(2, n)
+			.filter(lab7::isPerfect)
+			.toArray();
+	}
+
+	// ----------------- допоміжні методи -----------------
+	private static String[] splitWords(String line) {
+		if (line == null || line.trim().isEmpty()) return new String[0];
+		return line.trim().split("\\s+");
+	}
+
+	private static boolean isLatinWord(String s) {
+		return s.matches("[A-Za-z]+");
+	}
+
+	private static boolean isPrime(int x) {
+		if (x < 2) return false;
+		if (x == 2) return true;
+		if (x % 2 == 0) return false;
+		int r = (int) Math.sqrt(x);
+		for (int i = 3; i <= r; i += 2)
+			if (x % i == 0) return false;
+		return true;
+	}
+
+	private static int reverseInt(int x) {
+		int rev = 0;
+		while (x > 0) {
+			rev = rev * 10 + (x % 10);
+			x /= 10;
+		}
+		return rev;
+	}
+
+	private static List<Integer> primesUpTo(int n) {
+		return IntStream.rangeClosed(2, n).filter(lab7::isPrime).boxed().collect(Collectors.toList());
+	}
+
+	private static boolean isPerfect(int x) {
+		int sum = 1;
+		int r = (int) Math.sqrt(x);
+		for (int i = 2; i <= r; ++i) {
+			if (x % i == 0) {
+				sum += i;
+				int j = x / i;
+				if (j != i) sum += j;
+			}
+		}
+		return x != 1 && sum == x;
+	}
+
+	// ----------------- main для короткої демонстрації -----------------
 	public static void main(String[] args) {
-		Scanner sc = new Scanner(System.in);
-		System.out.println("Red-Black Tree demo");
-		System.out.println("Виберіть режим додавання елементів:");
-		System.out.println("1 - випадкові числа");
-		System.out.println("2 - впорядковано (зростання)");
-		System.out.println("3 - ручний ввід (введіть числа через пробіл)");
+		// Приклади використання (можна замінити на власні дані)
+		String[] arr = {"one", "three", "four", "sixty", "a", "alphabet"};
+		System.out.println("Shorter than avg: " + Arrays.toString(shorterThanAverage(arr)));
+		System.out.println("Longer than avg: " + Arrays.toString(longerThanAverage(arr)));
 
-		int choice = 0;
-		try {
-			choice = Integer.parseInt(sc.nextLine().trim());
-		} catch (Exception e) {
-			System.out.println("Невірний ввід, використано режим 1.");
-			choice = 1;
-		}
+		String line = "hello aaa abcde aabbb cba 123 abba AbBa";
+		System.out.println("Min distinct chars word: " + Arrays.toString(wordWithMinDistinctChars(line)));
+		System.out.println("Latin with equal vowels/consonants: " + Arrays.toString(latinWordsWithEqualVowelsAndConsonants(line)));
+		System.out.println("Increasing char codes: " + Arrays.toString(wordsWithIncreasingCharCodes(line)));
+		System.out.println("All unique chars: " + Arrays.toString(wordsWithAllUniqueChars(line)));
 
-		List<Integer> values = new ArrayList<>();
-		Random rnd = new Random();
-
-		if (choice == 1) {
-			System.out.print("Скільки випадкових чисел згенерувати? ");
-			int n = Integer.parseInt(sc.nextLine().trim());
-			for (int i = 0; i < n; i++) values.add(rnd.nextInt(100));
-			System.out.println("Порядок додавання: " + values);
-		} else if (choice == 2) {
-			System.out.print("Скільки чисел згенерувати і впорядкувати? ");
-			int n = Integer.parseInt(sc.nextLine().trim());
-			for (int i = 0; i < n; i++) values.add(rnd.nextInt(100));
-			Collections.sort(values);
-			System.out.println("Порядок (зростання): " + values);
-		} else {
-			System.out.println("Введіть числа через пробіл:");
-			String line = sc.nextLine().trim();
-			if (!line.isEmpty()) {
-				for (String s : line.split("\\s+")) {
-					try { values.add(Integer.parseInt(s)); } catch (Exception ignored) {}
-				}
-			}
-			System.out.println("Порядок додавання: " + values);
-		}
-
-		RBTree tree = new RBTree();
-		for (int v : values) tree.insert(v);
-
-		System.out.println("\nОбходи дерева:");
-		System.out.print("In-order: ");
-		tree.inorder();
-		System.out.print("Pre-order: ");
-		tree.preorder();
-
-		System.out.println("\nВізуалізація дерева:");
-		tree.display();
-
-		System.out.println("\nБажаєте видалити значення? (y/n)");
-		String ans = sc.nextLine().trim().toLowerCase();
-		if (ans.equals("y") || ans.equals("так") || ans.equals("t")) {
-			System.out.println("Введіть числа для видалення через пробіл (всі входження):");
-			String line = sc.nextLine().trim();
-			Set<Integer> toRemove = new HashSet<>();
-			if (!line.isEmpty()) {
-				for (String s : line.split("\\s+")) {
-					try { toRemove.add(Integer.parseInt(s)); } catch (Exception ignored) {}
-				}
-			}
-			if (!toRemove.isEmpty()) {
-				// Варіативний підхід до видалення: перебудова дерева з елементів, що залишились
-				List<Integer> survivors = new ArrayList<>();
-				for (int v : values) if (!toRemove.contains(v)) survivors.add(v);
-				RBTree newTree = new RBTree();
-				for (int v : survivors) newTree.insert(v);
-				System.out.println("\nПісля видалення:");
-				System.out.print("In-order: ");
-				newTree.inorder();
-				System.out.println("\nВізуалізація дерева:");
-				newTree.display();
-			} else {
-				System.out.println("Немає дійсних значень для видалення.");
-			}
-		}
-
-		System.out.println("\nГотово.");
-		sc.close();
+		int n = 100;
+		System.out.println("Prime with max ones in binary <= " + n + ": " + primeWithMaxOnesInBinary(n));
+		System.out.println("Prime with max zeros in binary <= " + n + ": " + primeWithMaxZerosInBinary(n));
+		System.out.println("Super-primes <= 1000 (count): " + countSuperPrimes(1000));
+		System.out.println("Perfect numbers up to 10000: " + Arrays.toString(perfectNumbersUpTo(10000)));
 	}
 }
